@@ -7,8 +7,8 @@ HighQualityUtils.settings().setAuthToken(ScriptProperties)
 const spreadsheetBotId = 2
 const channels = HighQualityUtils.channels().getAll()
 
-// Only synchronizing the videos for now
-function synchronizeSheetsAndDatabase() {
+// TODO synchronize channels and playlists
+function synchronizeVideos() {
   const sheetVideos  = new Map()
 
   // Get videos from the channel sheets
@@ -16,14 +16,13 @@ function synchronizeSheetsAndDatabase() {
     console.log(channel.getDatabaseObject().title)
     // Loop through each of the sheet's rows
     channel.getSheet().getValues().forEach(valueArr => {
-      const description = (valueArr[6] instanceof String ? valueArr[6].replace(/NEWLINE/g, "\n") : "")
       // Since the data is from a sheet instead of the database or youtube, create the object manually
       sheetVideos.set(valueArr[0], {
         "id": valueArr[0],
         "visible": true,
         "publishedAt": valueArr[4],
         "title": valueArr[1],
-        "description": description,
+        "description": valueArr[6].toString().replace(/NEWLINE/g, "\n"), //description,
         "duration": valueArr[5],
         "viewCount": valueArr[7],
         "likeCount": valueArr[8],
@@ -47,18 +46,19 @@ function synchronizeSheetsAndDatabase() {
   let dbExistingVideos = []
 
   // Find objects missing from database
+  // TODO continue from previous run to get around only being able to push a limited number of objects at a time
   sheetVideos.forEach(sheetVideo => {
     if (dbVideos.has(sheetVideo.id) === false) {
-      dbMissingVideos.push(sheetVideo)
+      if (dbMissingVideos.length < 5) dbMissingVideos.push(sheetVideo)
     } else {
-      dbExistingVideos.push(sheetVideo)
+      if (dbExistingVideos.length < 5) dbExistingVideos.push(sheetVideo)
     }
   })
 
   // Find objects missing from sheets
   dbVideos.forEach(dbVideo => {
     if (sheetVideos.has(dbVideo.id) === false) {
-      sheetMissingVideos.push(dbVideo)
+      if (sheetMissingVideos.length < 5) sheetMissingVideos.push(dbVideo)
     }
   })
 
@@ -68,11 +68,13 @@ function synchronizeSheetsAndDatabase() {
 
   // Post missing objects to insert into the database
   if (dbMissingVideos.length > 0) {
+    console.log(`Posting ${dbMissingVideos.length} videos to database`)
     HighQualityUtils.database().postData(videoPath, dbMissingVideos)
   }
 
   // Put everything else to update the database
   if (dbExistingVideos.length > 0) {
+    console.log(`Updating ${dbMissingVideos.length} videos in database`)
     HighQualityUtils.database().putData(videoPath, dbExistingVideos)
   }
 
