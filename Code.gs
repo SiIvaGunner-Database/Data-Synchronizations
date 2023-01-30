@@ -8,6 +8,10 @@ const spreadsheetBotId = 2
 const channels = HighQualityUtils.channels().getAll()
 
 // TODO synchronize channels and playlists
+
+/**
+ * Add any videos that don't exist in the database and update any that do exist.
+ */
 function synchronizeVideos() {
   const sheetVideos  = new Map()
 
@@ -82,4 +86,43 @@ function synchronizeVideos() {
   if (sheetMissingVideos.length > 0) {
     console.warn(`Found ${sheetMissingVideos.length} videos missing from sheets:\n`, sheetMissingVideos)
   }
+}
+
+/**
+ * Add videos from a playlist to their respective spreadsheet.
+ */
+function addVideosFromPlaylist() {
+  HighQualityUtils.settings().enableYoutubeApi()
+  const playlistId = "PLJ6iE9ACR2nosV37Ks61oEJzieEYPxaT4"
+  const [videos] = HighQualityUtils.videos().getByPlaylistId(playlistId)
+  console.log(`Found ${videos.length} videos in playlist`)
+
+  videos.forEach(video => {
+    const channel = video.getChannel()
+    const sheet = channel.getSheet()
+    const metadata = video.getOriginalObject()
+
+    if (sheet.getValues().some(row => row[0] === video.getId()) === true) {
+      console.log(`"${video.getId()}" has already been added`)
+      return
+    }
+
+    console.log(`Adding "${video.getId()}" to "${sheet.getSpreadsheet().getId()}"`)
+
+    const videoRow = [[
+      HighQualityUtils.utils().formatYoutubeHyperlink(video.getId()),
+      metadata.title,
+      video.getWikiStatus(),
+      video.getYoutubeStatus(),
+      HighQualityUtils.utils().formatDate(metadata.publishedAt),
+      metadata.duration,
+      metadata.description.toString().replace(/\n/g, "NEWLINE"),
+      metadata.viewCount,
+      metadata.likeCount,
+      0, // dislike count
+      metadata.commentCount
+    ]]
+
+    sheet.insertValues(videoRow)
+  })
 }

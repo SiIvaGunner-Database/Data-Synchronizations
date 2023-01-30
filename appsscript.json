@@ -1,5 +1,5 @@
 {
-  "timeZone": "Etc/UTC",
+  "timeZone": "UTC",
   "dependencies": {
     "libraries": [
       {
@@ -7,6 +7,13 @@
         "version": "0",
         "libraryId": "1edXoDXtDEng2e6DRVV2tzjchzhks6AZ4-p1GbKt3GnRgrDzpyiAmy7h5",
         "developmentMode": true
+      }
+    ],
+    "enabledAdvancedServices": [
+      {
+        "userSymbol": "YouTube",
+        "version": "v3",
+        "serviceId": "youtube"
       }
     ]
   },
