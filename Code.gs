@@ -7,7 +7,54 @@ HighQualityUtils.settings().setAuthToken(ScriptProperties)
 const spreadsheetBotId = 2
 const channels = HighQualityUtils.channels().getAll()
 
-// TODO synchronize channels and playlists
+/**
+ * Add any channels that don't exist in the database and update any that do exist.
+ */
+function synchronizeChannels() {
+  const channelSheet = HighQualityUtils.spreadsheets().getById("16PLJOqdZOdLXguKmUlUwZfu-1rVXzuJLHbY18BUSOAw").getSheet("channels")
+  const channelValues = channelSheet.getValues()
+
+  const dbMissingChannels = []
+  const dbExistingChannels = []
+
+  channelValues.forEach(valueArr => {
+    // Since the data is from a sheet instead of the database or youtube, create the object manually
+    const sheetChannel = {
+      "id": valueArr[0],
+      "visible": true,
+      "title": valueArr[1],
+      "description": valueArr[5],
+      "publishedAt": valueArr[4],
+      "wiki": valueArr[2],
+      "viewCount": valueArr[8],
+      "subscriberCount": valueArr[7],
+      "videoCount": valueArr[6],
+      "channelStatus": valueArr[3],
+      "author": spreadsheetBotId
+    }
+
+    // If a channel with this ID exists in the database
+    if (channels.some(channel => channel.getId() === sheetChannel.id) === true) {
+      dbExistingChannels.push(sheetChannel)
+    } else {
+      dbMissingChannels.push(sheetChannel)
+    }
+  })
+
+  const channelPath = HighQualityUtils.channels().getApiPath()
+
+  // Post missing objects to insert into the database
+  if (dbMissingChannels.length > 0) {
+    console.log(`Posting ${dbMissingChannels.length} channels to database`)
+    HighQualityUtils.database().postData(channelPath, dbMissingChannels)
+  }
+
+  // Put everything else to update the database
+  if (dbExistingChannels.length > 0) {
+    console.log(`Updating ${dbExistingChannels.length} channels in database`)
+    HighQualityUtils.database().putData(channelPath, dbExistingChannels)
+  }
+}
 
 /**
  * Add any videos that don't exist in the database and update any that do exist.
@@ -26,7 +73,7 @@ function synchronizeVideos() {
         "visible": true,
         "publishedAt": valueArr[4],
         "title": valueArr[1],
-        "description": valueArr[6].toString().replace(/NEWLINE/g, "\n"), //description,
+        "description": valueArr[6].toString().replace(/NEWLINE/g, "\n"),
         "duration": valueArr[5],
         "viewCount": valueArr[7],
         "likeCount": valueArr[8],
@@ -45,9 +92,9 @@ function synchronizeVideos() {
   const dbVideosArr = HighQualityUtils.database().getData(videoPath).results.filter(dbObject => dbObject.visible === true)
   const dbVideos = new Map(dbVideosArr.map(dbVideo => [dbVideo.id, dbVideo]))
 
-  let sheetMissingVideos = []
-  let dbMissingVideos = []
-  let dbExistingVideos = []
+  const sheetMissingVideos = []
+  const dbMissingVideos = []
+  const dbExistingVideos = []
 
   // Find objects missing from database
   // TODO continue from previous run to get around only being able to push a limited number of objects at a time
@@ -62,7 +109,7 @@ function synchronizeVideos() {
   // Find objects missing from sheets
   dbVideos.forEach(dbVideo => {
     if (sheetVideos.has(dbVideo.id) === false) {
-      if (sheetMissingVideos.length < 5) sheetMissingVideos.push(dbVideo)
+      sheetMissingVideos.push(dbVideo)
     }
   })
 
