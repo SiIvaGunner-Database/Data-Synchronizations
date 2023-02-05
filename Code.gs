@@ -18,18 +18,26 @@ function synchronizeChannels() {
   const dbExistingChannels = []
 
   channelValues.forEach(valueArr => {
+    const developmentSpreadsheet = (
+      valueArr[1] === "1Q_L84zZ2rzS57ZcDcCdmxMsguqjpnbLGr5_QVX5LVKA" // if bootleg rips database
+      ? "1JhARnRkPEtwGFGgmxIBFoWixB7QR2K_toz38-tTHDOM" // then bootleg rips database
+      : "1uRgcmhoRNBPabK0JnTpjUxxaickBH0iGCXRrSDhkxO0" // else main rips database
+    )
+
     // Since the data is from a sheet instead of the database or youtube, create the object manually
     const sheetChannel = {
       "id": valueArr[0],
       "visible": true,
-      "title": valueArr[1],
-      "description": valueArr[5],
-      "publishedAt": valueArr[4],
-      "wiki": valueArr[2],
-      "viewCount": valueArr[8],
-      "subscriberCount": valueArr[7],
-      "videoCount": valueArr[6],
-      "channelStatus": valueArr[3],
+      "title": valueArr[2],
+      "description": valueArr[6],
+      "publishedAt": valueArr[5],
+      "wiki": valueArr[3],
+      "viewCount": valueArr[9],
+      "subscriberCount": valueArr[8],
+      "videoCount": valueArr[7],
+      "channelStatus": valueArr[4],
+      "developmentSpreadsheet": developmentSpreadsheet,
+      "productionSpreadsheet": valueArr[1],
       "author": spreadsheetBotId
     }
 
@@ -60,60 +68,59 @@ function synchronizeChannels() {
  * Add any videos that don't exist in the database and update any that do exist.
  */
 function synchronizeVideos() {
-  const sheetVideos  = new Map()
+  const dbVideoLimit = 1000
+  const sheetVideos  = []
+  const channelIndexKey = "channelIndexKey"
+  const videoIndexKey = "videoIndexKey"
+
+  // Number will default to 0 if a value doesn't exist
+  const channelIndex = Number(ScriptProperties.getProperty(channelIndexKey))
+  const videoIndex = Number(ScriptProperties.getProperty(videoIndexKey))
+  const channel = channels[channelIndex]
 
   // Get videos from the channel sheets
-  channels.forEach(channel => {
-    console.log(channel.getDatabaseObject().title)
-    // Loop through each of the sheet's rows
-    channel.getSheet().getValues().forEach(valueArr => {
-      // Since the data is from a sheet instead of the database or youtube, create the object manually
-      sheetVideos.set(valueArr[0], {
-        "id": valueArr[0],
-        "visible": true,
-        "publishedAt": valueArr[4],
-        "title": valueArr[1],
-        "description": valueArr[6].toString().replace(/NEWLINE/g, "\n"),
-        "duration": valueArr[5],
-        "viewCount": valueArr[7],
-        "likeCount": valueArr[8],
-        "dislikeCount": valueArr[9],
-        "commentCount": valueArr[10],
-        "wikiStatus": valueArr[2],
-        "videoStatus": valueArr[3],
-        "author": spreadsheetBotId,
-        "channel": channel.getId()
-      })
+  console.log(channel.getDatabaseObject().title)
+  // Loop through each of the sheet's rows
+  channel.getSheet().getValues().forEach(valueArr => {
+    // Since the data is from a sheet instead of the database or youtube, create the object manually
+    sheetVideos.push({
+      "id": valueArr[0],
+      "visible": true,
+      "publishedAt": valueArr[4],
+      "title": valueArr[1],
+      "description": valueArr[6].toString().replace(/NEWLINE/g, "\n"),
+      "duration": valueArr[5],
+      "viewCount": valueArr[7],
+      "likeCount": valueArr[8],
+      "dislikeCount": valueArr[9],
+      "commentCount": valueArr[10],
+      "wikiStatus": valueArr[2],
+      "videoStatus": valueArr[3],
+      "author": spreadsheetBotId,
+      "channel": channel.getId()
     })
   })
 
   // Get videos from the database
   const videoPath = HighQualityUtils.videos().getApiPath()
-  const dbVideosArr = HighQualityUtils.database().getData(videoPath).results.filter(dbObject => dbObject.visible === true)
+  const dbVideosArr = HighQualityUtils.database().getData(videoPath).results
+    .filter(dbObject => dbObject.visible === true && dbObject.channel === channel.getId())
   const dbVideos = new Map(dbVideosArr.map(dbVideo => [dbVideo.id, dbVideo]))
 
-  const sheetMissingVideos = []
   const dbMissingVideos = []
   const dbExistingVideos = []
 
-  // Find objects missing from database
-  // TODO continue from previous run to get around only being able to push a limited number of objects at a time
-  sheetVideos.forEach(sheetVideo => {
+  // Find database objects to update without going over the object limit
+  for (let i = videoIndex; i < sheetVideos.length && dbMissingVideos.length + dbExistingVideos.length < dbVideoLimit; i++) {
+    const sheetVideo = sheetVideos[i]
+
     if (dbVideos.has(sheetVideo.id) === false) {
-      if (dbMissingVideos.length < 5) dbMissingVideos.push(sheetVideo)
+      dbMissingVideos.push(sheetVideo)
     } else {
-      if (dbExistingVideos.length < 5) dbExistingVideos.push(sheetVideo)
+      dbExistingVideos.push(sheetVideo)
     }
-  })
+  }
 
-  // Find objects missing from sheets
-  dbVideos.forEach(dbVideo => {
-    if (sheetVideos.has(dbVideo.id) === false) {
-      sheetMissingVideos.push(dbVideo)
-    }
-  })
-
-  console.log("Missing from sheets:   ", sheetMissingVideos.length, sheetMissingVideos[0])
   console.log("Missing from database: ", dbMissingVideos.length, dbMissingVideos[0])
   console.log("Existing in database:  ", dbExistingVideos.length, dbExistingVideos[0])
 
@@ -125,14 +132,27 @@ function synchronizeVideos() {
 
   // Put everything else to update the database
   if (dbExistingVideos.length > 0) {
-    console.log(`Updating ${dbMissingVideos.length} videos in database`)
+    console.log(`Updating ${dbExistingVideos.length} videos in database`)
     HighQualityUtils.database().putData(videoPath, dbExistingVideos)
   }
 
-  // Warn of missing objects in the sheets
-  if (sheetMissingVideos.length > 0) {
-    console.warn(`Found ${sheetMissingVideos.length} videos missing from sheets:\n`, sheetMissingVideos)
+  let nextChannelIndex = channelIndex
+  let nextVideoIndex = videoIndex + dbVideoLimit
+
+  // If this is the last of the videos to update for this channel
+  if (nextVideoIndex >= sheetVideos.length) {
+    // If this is the last of the channels to update
+    if (nextChannelIndex >= channels.length) {
+      nextChannelIndex = 0
+    } else {
+      nextChannelIndex = channelIndex + 1
+    }
+
+    nextVideoIndex = 0
   }
+
+  ScriptProperties.setProperty(channelIndexKey, nextChannelIndex)
+  ScriptProperties.setProperty(videoIndexKey, nextVideoIndex)
 }
 
 /**
