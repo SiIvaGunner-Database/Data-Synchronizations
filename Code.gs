@@ -1,5 +1,5 @@
-// Update utility settings
-HighQualityUtils.settings().enableDevMode()
+// IMPORTANT! Enable dev mode when testing.
+// HighQualityUtils.settings().enableDevMode()
 HighQualityUtils.settings().disableYoutubeApi()
 HighQualityUtils.settings().setAuthToken(ScriptProperties)
 
