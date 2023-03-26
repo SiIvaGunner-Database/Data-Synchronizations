@@ -102,7 +102,8 @@ function synchronizeVideos() {
   })
 
   // Get videos from the database
-  const [dbVideosArr] = HighQualityUtils.videos().getByChannelId(channel.getId())
+  const options = { "fields": "id" }
+  const [dbVideosArr] = HighQualityUtils.videos().getByChannelId(channel.getId(), options)
   const dbVideos = new Map(dbVideosArr.map(dbVideo => [dbVideo.getId(), dbVideo.getOriginalObject()]))
 
   const dbMissingVideos = []
@@ -119,8 +120,8 @@ function synchronizeVideos() {
     }
   }
 
-  console.log("Missing from database: ", dbMissingVideos.length, dbMissingVideos[0])
-  console.log("Existing in database:  ", dbExistingVideos.length, dbExistingVideos[0])
+  console.log("Missing from database: ", dbMissingVideos.length)
+  console.log("Existing in database:  ", dbExistingVideos.length)
 
   const videoPath = HighQualityUtils.videos().getApiPath()
 
