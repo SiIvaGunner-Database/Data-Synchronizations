@@ -82,6 +82,11 @@ function synchronizeVideos() {
   console.log(channel.getDatabaseObject().title)
   // Loop through each of the sheet's rows
   channel.getSheet().getValues().forEach(valueArr => {
+    // If the ID isn't known, use the first 11 digits of the title
+    if (valueArr[0] === "") {
+      valueArr[0] = valueArr[1].replace(/\s+/g, '').substring(0, 11)
+    }
+
     // Since the data is from a sheet instead of the database or youtube, create the object manually
     sheetVideos.push({
       "id": valueArr[0],
@@ -120,6 +125,7 @@ function synchronizeVideos() {
     }
   }
 
+  console.log("Total in sheet: ", sheetVideos.length)
   console.log("Missing from database: ", dbMissingVideos.length)
   console.log("Existing in database:  ", dbExistingVideos.length)
 
