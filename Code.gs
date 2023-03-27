@@ -68,7 +68,7 @@ function synchronizeChannels() {
  * Add any videos that don't exist in the database and update any that do exist.
  */
 function synchronizeVideos() {
-  const dbVideoLimit = 1000
+  const dbVideoLimit = 500
   const sheetVideos  = []
   const channelIndexKey = "channelIndexKey"
   const videoIndexKey = "videoIndexKey"
@@ -147,9 +147,9 @@ function synchronizeVideos() {
   let nextVideoIndex = videoIndex + dbVideoLimit
 
   // If this is the last of the videos to update for this channel
-  if (nextVideoIndex >= sheetVideos.length) {
+  if (nextVideoIndex >= sheetVideos.length - 1) {
     // If this is the last of the channels to update
-    if (nextChannelIndex >= channels.length) {
+    if (nextChannelIndex >= channels.length - 1) {
       nextChannelIndex = 0
     } else {
       nextChannelIndex = channelIndex + 1
