@@ -4,7 +4,7 @@ HighQualityUtils.settings().disableYoutubeApi()
 HighQualityUtils.settings().setAuthToken(ScriptProperties)
 
 // Get channels from database
-const spreadsheetBotId = 2
+const spreadsheetBotId = HighQualityUtils.settings().getBotId()
 const channels = HighQualityUtils.channels().getAll()
 
 /**
