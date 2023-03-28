@@ -70,8 +70,8 @@ function synchronizeChannels() {
 function synchronizeVideos() {
   const dbVideoLimit = 500
   const sheetVideos  = []
-  const channelIndexKey = "channelIndexKey"
-  const videoIndexKey = "videoIndexKey"
+  const channelIndexKey = "channelIndex"
+  const videoIndexKey = "videoIndex"
 
   // Number will default to 0 if a value doesn't exist
   const channelIndex = Number(ScriptProperties.getProperty(channelIndexKey))
