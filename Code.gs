@@ -170,7 +170,6 @@ function addMissingUnlistedVideos() {
   HighQualityUtils.settings().enableYoutubeApi()
   const wikis = ["siivagunner", "ttgd"]
   const category = "Unlisted rips"
-  wikis.pop()
 
   wikis.forEach(wiki => {
     const categoryMembers = HighQualityUtils.utils().fetchFandomCategoryMembers(wiki, category)
