@@ -84,7 +84,7 @@ function synchronizeVideos() {
   channel.getSheet().getValues().forEach(valueArr => {
     // If the ID isn't known, use the first 11 digits of the title
     if (valueArr[0] === "") {
-      valueArr[0] = valueArr[1].replace(/\s+/g, '').substring(0, 11)
+      valueArr[0] = valueArr[1].replace(/[()\s]+/g, '').substring(0, 11)
     }
 
     // Since the data is from a sheet instead of the database or youtube, create the object manually
