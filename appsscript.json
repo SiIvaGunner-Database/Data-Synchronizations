@@ -1,22 +1,22 @@
 {
   "timeZone": "UTC",
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
   "dependencies": {
-    "libraries": [
-      {
-        "userSymbol": "HighQualityUtils",
-        "version": "0",
-        "libraryId": "1edXoDXtDEng2e6DRVV2tzjchzhks6AZ4-p1GbKt3GnRgrDzpyiAmy7h5",
-        "developmentMode": true
-      }
-    ],
     "enabledAdvancedServices": [
       {
         "userSymbol": "YouTube",
-        "version": "v3",
-        "serviceId": "youtube"
+        "serviceId": "youtube",
+        "version": "v3"
+      }
+    ],
+    "libraries": [
+      {
+        "userSymbol": "HighQualityUtils",
+        "libraryId": "1edXoDXtDEng2e6DRVV2tzjchzhks6AZ4-p1GbKt3GnRgrDzpyiAmy7h5",
+        "version": "0",
+        "developmentMode": true
       }
     ]
-  },
-  "exceptionLogging": "STACKDRIVER",
-  "runtimeVersion": "V8"
+  }
 }

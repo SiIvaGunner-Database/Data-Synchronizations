@@ -126,6 +126,7 @@ function synchronizeVideos() {
   }
 
   console.log("Total in sheet: ", sheetVideos.length)
+  console.log("Total in database: ", dbVideos.size)
   console.log("Missing from database: ", dbMissingVideos.length)
   console.log("Existing in database:  ", dbExistingVideos.length)
 
@@ -163,20 +164,57 @@ function synchronizeVideos() {
 }
 
 /**
- * Add videos from a playlist to their respective spreadsheet.
+ * Find unlisted videos on the wiki and add them to their respective sheet.
  */
-function addVideosFromPlaylist() {
+function addMissingUnlistedVideos() {
   HighQualityUtils.settings().enableYoutubeApi()
-  const playlistId = "PLJ6iE9ACR2nosV37Ks61oEJzieEYPxaT4"
+  const wikis = ["siivagunner", "ttgd"]
+  const category = "Unlisted rips"
+  wikis.pop()
+
+  wikis.forEach(wiki => {
+    const categoryMembers = HighQualityUtils.utils().fetchFandomCategoryMembers(wiki, category)
+    const videoIds = categoryMembers.map(categoryMember => HighQualityUtils.utils().fetchFandomVideoId(wiki, categoryMember.title))
+    const videos = HighQualityUtils.videos().getByIds(videoIds)
+    console.log(`Found ${videos.length} unlisted videos in ${wiki} wiki\n`)
+    addVideosToSheet(videos)
+  })
+}
+
+/**
+ * Add videos from a playlist to their respective spreadsheet.
+ * @param {String} playlistId - The playlist ID.
+ */
+function addVideosFromPlaylist(playlistId) {
+  HighQualityUtils.settings().enableYoutubeApi()
   const [videos] = HighQualityUtils.videos().getByPlaylistId(playlistId)
   console.log(`Found ${videos.length} videos in playlist`)
+  addVideosToSheet(video)
+}
+
+/**
+ * Add videos to their respective spreadsheet.
+ * @param {Array[VideoModel]} videos - The video objects.
+ */
+function addVideosToSheet(videos) {
+  // Follows the form { channelId : { videoId : [...values], ...moreVideos }, ...moreChannels }
+  const sheetValuesMap = new Map()
 
   videos.forEach(video => {
+    if (video.getDatabaseObject() !== undefined) {
+      console.log(`"${video.getId()}" exists in the database`)
+    }
+
     const channel = video.getChannel()
     const sheet = channel.getSheet()
     const metadata = video.getOriginalObject()
 
-    if (sheet.getValues().some(row => row[0] === video.getId()) === true) {
+    // If the values map doesn't have values for this channel yet, instantiate that map of values
+    if (sheetValuesMap.has(channel.getId()) === false) {
+      sheetValuesMap.set(channel.getId(), new Map(sheet.getValues().map(row => [row[0], row])))
+    }
+
+    if (sheetValuesMap.get(channel.getId()).has(video.getId()) === true) {
       console.log(`"${video.getId()}" has already been added`)
       return
     }
@@ -185,7 +223,7 @@ function addVideosFromPlaylist() {
 
     const videoRow = [[
       HighQualityUtils.utils().formatYoutubeHyperlink(video.getId()),
-      metadata.title,
+      HighQualityUtils.utils().formatFandomHyperlink(metadata.title, channel.getDatabaseObject().wiki),
       video.getWikiStatus(),
       video.getYoutubeStatus(),
       HighQualityUtils.utils().formatDate(metadata.publishedAt),
