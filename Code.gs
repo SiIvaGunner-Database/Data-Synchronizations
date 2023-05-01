@@ -164,18 +164,18 @@ function synchronizeVideos() {
 }
 
 /**
- * Find unlisted videos on the wiki and add them to their respective sheet.
+ * Fetch video titles from a wiki category and add them to their respective sheets.
+ * @param {String} [category] - The category to retrieve.
+ * @param {Array[String]} [wikis] - The wikis to search.
  */
-function addMissingUnlistedVideos() {
+function addVideosFromCategory(category = "April Fools' Day 2023", wikis = ["siivagunner"]) {
   HighQualityUtils.settings().enableYoutubeApi()
-  const wikis = ["siivagunner", "ttgd"]
-  const category = "Unlisted rips"
 
   wikis.forEach(wiki => {
     const categoryMembers = HighQualityUtils.utils().fetchFandomCategoryMembers(wiki, category)
     const videoIds = categoryMembers.map(categoryMember => HighQualityUtils.utils().fetchFandomVideoId(wiki, categoryMember.title))
     const videos = HighQualityUtils.videos().getByIds(videoIds)
-    console.log(`Found ${videos.length} unlisted videos in ${wiki} wiki\n`)
+    console.log(`Found ${videos.length} videos in ${wiki} wiki category "${category}"\n`)
     addVideosToSheet(videos)
   })
 }
@@ -189,6 +189,15 @@ function addVideosFromPlaylist(playlistId) {
   const [videos] = HighQualityUtils.videos().getByPlaylistId(playlistId)
   console.log(`Found ${videos.length} videos in playlist`)
   addVideosToSheet(video)
+}
+
+/**
+ * Add a video to its respective spreadsheet.
+ * @param {String} videoId - The video ID.
+ */
+function addVideoToSheet(videoId = "18LxFXpUCVI") {
+  HighQualityUtils.settings().enableYoutubeApi()
+  addVideosToSheet([HighQualityUtils.videos().getById(videoId)])
 }
 
 /**
@@ -215,6 +224,9 @@ function addVideosToSheet(videos) {
 
     if (sheetValuesMap.get(channel.getId()).has(video.getId()) === true) {
       console.log(`"${video.getId()}" has already been added`)
+      return
+    } else if (metadata === undefined) {
+      console.log(`No metadata found for "${video.getId()}"`)
       return
     }
 
