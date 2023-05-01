@@ -107,7 +107,7 @@ function synchronizeVideos() {
   })
 
   // Get videos from the database
-  const options = { "fields": "id" }
+  const options = { "parameters": { "fields": "id" } }
   const [dbVideosArr] = HighQualityUtils.videos().getByChannelId(channel.getId(), options)
   const dbVideos = new Map(dbVideosArr.map(dbVideo => [dbVideo.getId(), dbVideo.getOriginalObject()]))
 
@@ -161,6 +161,27 @@ function synchronizeVideos() {
 
   ScriptProperties.setProperty(channelIndexKey, nextChannelIndex)
   ScriptProperties.setProperty(videoIndexKey, nextVideoIndex)
+}
+
+/**
+ * Mass update table records in the database.
+ */
+function updateObjectValues() {
+  const channels = HighQualityUtils.channels().getAll()
+
+  channels.forEach(channel => {
+    const isPartOfBigThree = (channel.getDatabaseObject().productionSpreadsheet === "1B7b9jEaWiqZI8Z8CzvFN1cBvLVYwjb5xzhWtrgs4anI")
+
+    if (isPartOfBigThree === true) {
+      channel.getDatabaseObject().productionChangelogSpreadsheet = "1EKQq1K8Bd7hDlFMg1Y5G_a2tWk_FH39bgniUUBGlFKM"
+      channel.getDatabaseObject().developmentChangelogSpreadsheet = "1rN_VcmuhiDE3iyv8QvtzOqCtQUfXRRtnQxJLSkgsuBw"
+    } else {
+      channel.getDatabaseObject().productionChangelogSpreadsheet = "1pN9O24zfrDBl6WNySj4yurFiqT3UmQd1IdRISvUjHd8"
+      channel.getDatabaseObject().developmentChangelogSpreadsheet = "1EqHI5csBFO0dpm4HpwwzAqtmUbC2B5G-MW1Kgew-vpM"
+    }
+
+    channel.update()
+  })  
 }
 
 /**
