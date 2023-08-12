@@ -1,7 +1,9 @@
+const scriptProperties = PropertiesService.getScriptProperties()
+
 // IMPORTANT! Enable dev mode when testing.
 // HighQualityUtils.settings().enableDevMode()
 HighQualityUtils.settings().disableYoutubeApi()
-HighQualityUtils.settings().setAuthToken(ScriptProperties)
+HighQualityUtils.settings().setAuthToken(scriptProperties)
 
 // Get channels from database
 const spreadsheetBotId = HighQualityUtils.settings().getBotId()
@@ -74,8 +76,8 @@ function synchronizeVideos() {
   const videoIndexKey = "videoIndex"
 
   // Number will default to 0 if a value doesn't exist
-  const channelIndex = Number(ScriptProperties.getProperty(channelIndexKey))
-  const videoIndex = Number(ScriptProperties.getProperty(videoIndexKey))
+  const channelIndex = Number(scriptProperties.getProperty(channelIndexKey))
+  const videoIndex = Number(scriptProperties.getProperty(videoIndexKey))
   const channel = channels[channelIndex]
 
   // Get videos from the channel sheets
@@ -159,29 +161,8 @@ function synchronizeVideos() {
     nextVideoIndex = 0
   }
 
-  ScriptProperties.setProperty(channelIndexKey, nextChannelIndex)
-  ScriptProperties.setProperty(videoIndexKey, nextVideoIndex)
-}
-
-/**
- * Mass update table records in the database.
- */
-function updateObjectValues() {
-  const channels = HighQualityUtils.channels().getAll()
-
-  channels.forEach(channel => {
-    const isPartOfBigThree = (channel.getDatabaseObject().productionSpreadsheet === "1B7b9jEaWiqZI8Z8CzvFN1cBvLVYwjb5xzhWtrgs4anI")
-
-    if (isPartOfBigThree === true) {
-      channel.getDatabaseObject().productionChangelogSpreadsheet = "1EKQq1K8Bd7hDlFMg1Y5G_a2tWk_FH39bgniUUBGlFKM"
-      channel.getDatabaseObject().developmentChangelogSpreadsheet = "1rN_VcmuhiDE3iyv8QvtzOqCtQUfXRRtnQxJLSkgsuBw"
-    } else {
-      channel.getDatabaseObject().productionChangelogSpreadsheet = "1pN9O24zfrDBl6WNySj4yurFiqT3UmQd1IdRISvUjHd8"
-      channel.getDatabaseObject().developmentChangelogSpreadsheet = "1EqHI5csBFO0dpm4HpwwzAqtmUbC2B5G-MW1Kgew-vpM"
-    }
-
-    channel.update()
-  })  
+  scriptProperties.setProperty(channelIndexKey, nextChannelIndex)
+  scriptProperties.setProperty(videoIndexKey, nextVideoIndex)
 }
 
 /**
@@ -216,7 +197,7 @@ function addVideosFromPlaylist(playlistId) {
  * Add a video to its respective spreadsheet.
  * @param {String} videoId - The video ID.
  */
-function addVideoToSheet(videoId = "18LxFXpUCVI") {
+function addVideoToSheet(videoId = "KFCfxteJ2Zw") {
   HighQualityUtils.settings().enableYoutubeApi()
   addVideosToSheet([HighQualityUtils.videos().getById(videoId)])
 }
