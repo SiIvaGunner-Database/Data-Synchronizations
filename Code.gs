@@ -22,8 +22,8 @@ function synchronizeChannels() {
   channelValues.forEach(valueArr => {
     const developmentSpreadsheet = (
       valueArr[1] === "1Q_L84zZ2rzS57ZcDcCdmxMsguqjpnbLGr5_QVX5LVKA" // if bootleg rips database
-      ? "1JhARnRkPEtwGFGgmxIBFoWixB7QR2K_toz38-tTHDOM" // then bootleg rips database
-      : "1uRgcmhoRNBPabK0JnTpjUxxaickBH0iGCXRrSDhkxO0" // else main rips database
+      ? "1-X8Jx5uOtzPgMZIVkMu2PR6LgRr0rykdapacv50g5EI" // then bootleg rips database
+      : "1qMZEYTyh8qINjchKdXISha0KwLHAhcrSrTkQ4JipYTw" // else main rips database
     )
 
     // Since the data is from a sheet instead of the database or youtube, create the object manually
