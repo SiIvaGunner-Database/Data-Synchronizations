@@ -1,18 +1,67 @@
 const scriptProperties = PropertiesService.getScriptProperties()
+const spreadsheetBotId = HighQualityUtils.settings().getBotId()
 
 // IMPORTANT! Enable dev mode when testing.
 // HighQualityUtils.settings().enableDevMode()
 HighQualityUtils.settings().disableYoutubeApi()
 HighQualityUtils.settings().setAuthToken(scriptProperties)
 
-// Get channels from database
-const spreadsheetBotId = HighQualityUtils.settings().getBotId()
-const channels = HighQualityUtils.channels().getAll()
+/**
+ * Hide a channel and all of its videos in the spreadsheet and database.
+ */
+function hideChannel(channel = HighQualityUtils.channels().getById("UCegJwAR3I1tsMzSA0Xgmqvg")) {
+  hideChannelVideosBeforeDate(channel)
+
+  if (channel.hasSheet() === true) {
+    channel.getSpreadsheet().getOriginalObject().deleteSheet(channel.getSheet().getOriginalObject())
+  }
+
+  channel.getDatabaseObject().visible = false
+  channel.getDatabaseObject().developmentSpreadsheet = null
+  channel.getDatabaseObject().productionSpreadsheet = null
+  channel.update()
+}
+
+/**
+ * Hide channel videos uploaded before a given date in the spreadsheet and database.
+ */
+function hideChannelVideosBeforeDate(channel, beforeDate = new Date()) {
+  const videosToUpdate = []
+  const options = {
+    "parameters": {
+      "fields": "id,publishedAt,visible",
+      "ordering": "-publishedAt"
+    }
+  }
+
+  channel.getVideos(options)[0].forEach(video => {
+    const publishedAt = new Date(video.getDatabaseObject().publishedAt)
+    console.log(publishedAt, beforeDate, publishedAt < beforeDate)
+
+    if (publishedAt < beforeDate) {
+      video.getDatabaseObject().visible = false
+      videosToUpdate.push(video)
+    }
+  })
+
+  if (videosToUpdate.length > 0) {
+    console.log(`Updating ${videosToUpdate.length} videos for channel with ID ${channel.getId()}`)
+
+    if (channel.hasSheet() === true) {
+      const channelSheet = channel.getSheet().getOriginalObject()
+      const mostRecentRow = channelSheet.getRowIndexOfValue(videosToUpdate[0].getId())
+      channelSheet.getOriginalObject().deleteRows(mostRecentRow, videosToUpdate.length)
+    }
+
+    HighQualityUtils.videos().updateAll(videosToUpdate)
+  }
+}
 
 /**
  * Add any channels that don't exist in the database and update any that do exist.
  */
 function synchronizeChannels() {
+  const channels = HighQualityUtils.channels().getAll()
   const channelSheet = HighQualityUtils.spreadsheets().getById("16PLJOqdZOdLXguKmUlUwZfu-1rVXzuJLHbY18BUSOAw").getSheet("channels")
   const channelValues = channelSheet.getValues()
 
@@ -70,6 +119,9 @@ function synchronizeChannels() {
  * Add any videos that don't exist in the database and update any that do exist.
  */
 function synchronizeVideos() {
+  const options = { "parameters": { "fields": "id" } }
+  const channels = HighQualityUtils.channels().getAll(options)
+
   const dbVideoLimit = 500
   const sheetVideos  = []
   const channelIndexKey = "channelIndex"
@@ -109,7 +161,6 @@ function synchronizeVideos() {
   })
 
   // Get videos from the database
-  const options = { "parameters": { "fields": "id" } }
   const [dbVideosArr] = HighQualityUtils.videos().getByChannelId(channel.getId(), options)
   const dbVideos = new Map(dbVideosArr.map(dbVideo => [dbVideo.getId(), dbVideo.getOriginalObject()]))
 
