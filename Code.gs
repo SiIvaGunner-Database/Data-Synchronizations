@@ -9,7 +9,7 @@ HighQualityUtils.settings().setAuthToken(scriptProperties)
 /**
  * Hide a channel and all of its videos in the spreadsheet and database.
  */
-function hideChannel(channel = HighQualityUtils.channels().getById("UCegJwAR3I1tsMzSA0Xgmqvg")) {
+function hideChannel(channel = HighQualityUtils.channels().getById("id")) {
   hideChannelVideosBeforeDate(channel)
 
   if (channel.hasSheet() === true) {
@@ -36,7 +36,6 @@ function hideChannelVideosBeforeDate(channel, beforeDate = new Date()) {
 
   channel.getVideos(options)[0].forEach(video => {
     const publishedAt = new Date(video.getDatabaseObject().publishedAt)
-    console.log(publishedAt, beforeDate, publishedAt < beforeDate)
 
     if (publishedAt < beforeDate) {
       video.getDatabaseObject().visible = false
@@ -47,8 +46,8 @@ function hideChannelVideosBeforeDate(channel, beforeDate = new Date()) {
   if (videosToUpdate.length > 0) {
     console.log(`Updating ${videosToUpdate.length} videos for channel with ID ${channel.getId()}`)
 
-    if (channel.hasSheet() === true) {
-      const channelSheet = channel.getSheet().getOriginalObject()
+    if (channel.hasSheet() === true && beforeDate.getDay() < new Date().getDay()) {
+      const channelSheet = channel.getSheet()
       const mostRecentRow = channelSheet.getRowIndexOfValue(videosToUpdate[0].getId())
       channelSheet.getOriginalObject().deleteRows(mostRecentRow, videosToUpdate.length)
     }
@@ -248,7 +247,7 @@ function addVideosFromPlaylist(playlistId) {
  * Add a video to its respective spreadsheet.
  * @param {String} videoId - The video ID.
  */
-function addVideoToSheet(videoId = "KFCfxteJ2Zw") {
+function addVideoToSheet(videoId = "id") {
   HighQualityUtils.settings().enableYoutubeApi()
   addVideosToSheet([HighQualityUtils.videos().getById(videoId)])
 }
