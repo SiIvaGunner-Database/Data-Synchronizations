@@ -220,7 +220,7 @@ function synchronizeVideos() {
  * @param {String} [category] - The category to retrieve.
  * @param {Array[String]} [wikis] - The wikis to search.
  */
-function addVideosFromCategory(category = "April Fools' Day 2023", wikis = ["siivagunner"]) {
+function addVideosFromCategory(category = "Unlisted rips", wikis = ["siivagunner"]) {
   HighQualityUtils.settings().enableYoutubeApi()
 
   wikis.forEach(wiki => {
@@ -228,7 +228,8 @@ function addVideosFromCategory(category = "April Fools' Day 2023", wikis = ["sii
     const videoIds = categoryMembers.map(categoryMember => HighQualityUtils.utils().fetchFandomVideoId(wiki, categoryMember.title))
     const videos = HighQualityUtils.videos().getByIds(videoIds)
     console.log(`Found ${videos.length} videos in ${wiki} wiki category "${category}"\n`)
-    addVideosToSheet(videos)
+    // addVideosToSheet(videos)
+    logVideosMissingFromDatabase(videos)
   })
 }
 
@@ -261,6 +262,11 @@ function addVideosToSheet(videos) {
   const sheetValuesMap = new Map()
 
   videos.forEach(video => {
+    if (video === undefined || video === null) {
+      console.log(`No video found for ID "${video.getId()}"`)
+      return
+    }
+
     if (video.getDatabaseObject() !== undefined) {
       console.log(`"${video.getId()}" exists in the database`)
     }
@@ -299,5 +305,22 @@ function addVideosToSheet(videos) {
     ]]
 
     sheet.insertValues(videoRow)
+  })
+}
+
+/**
+ * Log video IDs that do not have database objects.
+ * @param {Array[VideoModel]} videos - The video objects.
+ */
+function logVideosMissingFromDatabase(videos) {
+  videos.forEach(video => {
+    if (video === undefined || video === null) {
+      console.log(`No video found`)
+      return
+    }
+
+    if (video.getDatabaseObject() === undefined) {
+      console.log(`"${video.getId()}" is missing from the database`)
+    }
   })
 }
