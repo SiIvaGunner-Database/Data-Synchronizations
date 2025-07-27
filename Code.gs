@@ -220,12 +220,12 @@ function synchronizeVideos() {
  * @param {String} [category] - The category to retrieve.
  * @param {Array[String]} [wikis] - The wikis to search.
  */
-function addVideosFromCategory(category = "Unlisted rips", wikis = ["siivagunner"]) {
+function addVideosFromCategory(category = "Unlisted rips", wikis = ["wiki"]) {
   HighQualityUtils.settings().enableYoutubeApi()
 
   wikis.forEach(wiki => {
-    const categoryMembers = HighQualityUtils.utils().fetchFandomCategoryMembers(wiki, category)
-    const videoIds = categoryMembers.map(categoryMember => HighQualityUtils.utils().fetchFandomVideoId(wiki, categoryMember.title))
+    const categoryMembers = HighQualityUtils.utils().fetchWikiCategoryMembers(wiki, category)
+    const videoIds = categoryMembers.map(categoryMember => HighQualityUtils.utils().fetchWikiVideoId(wiki, categoryMember.title))
     const videos = HighQualityUtils.videos().getByIds(videoIds)
     console.log(`Found ${videos.length} videos in ${wiki} wiki category "${category}"\n`)
     // addVideosToSheet(videos)
@@ -292,7 +292,7 @@ function addVideosToSheet(videos) {
 
     const videoRow = [[
       HighQualityUtils.utils().formatYoutubeHyperlink(video.getId()),
-      HighQualityUtils.utils().formatFandomHyperlink(metadata.title, channel.getDatabaseObject().wiki),
+      HighQualityUtils.utils().formatWikiHyperlink(metadata.title, channel.getDatabaseObject().wiki),
       video.getWikiStatus(),
       video.getYoutubeStatus(),
       HighQualityUtils.utils().formatDate(metadata.publishedAt),
